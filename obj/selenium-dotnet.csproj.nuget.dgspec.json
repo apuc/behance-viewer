@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Dantenerosas\\Documents\\Projects\\selenium-dotnet\\selenium-dotnet.csproj": {}
+    "C:\\Users\\Dantenerosas\\Documents\\Projects\\behance-viewer\\selenium-dotnet.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Dantenerosas\\Documents\\Projects\\selenium-dotnet\\selenium-dotnet.csproj": {
+    "C:\\Users\\Dantenerosas\\Documents\\Projects\\behance-viewer\\selenium-dotnet.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Dantenerosas\\Documents\\Projects\\selenium-dotnet\\selenium-dotnet.csproj",
+        "projectUniqueName": "C:\\Users\\Dantenerosas\\Documents\\Projects\\behance-viewer\\selenium-dotnet.csproj",
         "projectName": "selenium-dotnet",
-        "projectPath": "C:\\Users\\Dantenerosas\\Documents\\Projects\\selenium-dotnet\\selenium-dotnet.csproj",
+        "projectPath": "C:\\Users\\Dantenerosas\\Documents\\Projects\\behance-viewer\\selenium-dotnet.csproj",
         "packagesPath": "C:\\Users\\Dantenerosas\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Dantenerosas\\Documents\\Projects\\selenium-dotnet\\obj\\",
+        "outputPath": "C:\\Users\\Dantenerosas\\Documents\\Projects\\behance-viewer\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\Dantenerosas\\AppData\\Roaming\\NuGet\\NuGet.Config"

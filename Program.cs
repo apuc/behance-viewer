@@ -49,13 +49,12 @@ namespace selenium_dotnet
             {
                 proxy_str = getProxy();
                 counter++;
-                if (proxy_str == null) 
-                    Thread.Sleep(sleep_ms);
-                else if (used_proxies.ContainsKey(proxy_str)) {
+                if (proxy_str == null || used_proxies.ContainsKey(proxy_str)) {
                     Thread.Sleep(sleep_ms);
                     proxy_str = null;
                 } else {
                     used_proxies.Add(proxy_str, true);
+                    break;
                 }
             }
             return proxy_str;
