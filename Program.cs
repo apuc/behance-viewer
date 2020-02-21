@@ -40,7 +40,8 @@ namespace selenium_dotnet
             return null;
         }
 
-        static string getProxyLimit(int limit = 5)
+        static Dictionary<string, bool> used_proxies = new Dictionary<string, bool>();
+        static string getProxyLimit(int limit = 50, int sleep_ms = 5000)
         {
             string proxy_str = null;
             int counter = 0;
@@ -48,6 +49,14 @@ namespace selenium_dotnet
             {
                 proxy_str = getProxy();
                 counter++;
+                if (proxy_str == null) 
+                    Thread.Sleep(sleep_ms);
+                else if (used_proxies.ContainsKey(proxy_str)) {
+                    Thread.Sleep(sleep_ms);
+                    proxy_str = null;
+                } else {
+                    used_proxies.Add(proxy_str, true);
+                }
             }
             return proxy_str;
         }
