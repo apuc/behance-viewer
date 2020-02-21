@@ -1,0 +1,76 @@
+{
+  "format": 1,
+  "restore": {
+    "C:\\Users\\Dantenerosas\\Documents\\Projects\\selenium-dotnet\\selenium-dotnet.csproj": {}
+  },
+  "projects": {
+    "C:\\Users\\Dantenerosas\\Documents\\Projects\\selenium-dotnet\\selenium-dotnet.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\Dantenerosas\\Documents\\Projects\\selenium-dotnet\\selenium-dotnet.csproj",
+        "projectName": "selenium-dotnet",
+        "projectPath": "C:\\Users\\Dantenerosas\\Documents\\Projects\\selenium-dotnet\\selenium-dotnet.csproj",
+        "packagesPath": "C:\\Users\\Dantenerosas\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Dantenerosas\\Documents\\Projects\\selenium-dotnet\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\Dantenerosas\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "netcoreapp3.1"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "netcoreapp3.1": {
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "netcoreapp3.1": {
+          "dependencies": {
+            "DotNetSeleniumExtras.WaitHelpers": {
+              "target": "Package",
+              "version": "[3.11.0, )"
+            },
+            "MySqlConnector": {
+              "target": "Package",
+              "version": "[0.61.0, )"
+            },
+            "Restsharp": {
+              "target": "Package",
+              "version": "[106.10.1, )"
+            },
+            "Selenium.WebDriver": {
+              "target": "Package",
+              "version": "[3.141.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\3.1.102\\RuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}
