@@ -147,7 +147,7 @@ namespace selenium_dotnet
                             String result = visits.Substring(pFrom, pTo - pFrom);
 
                             Console.WriteLine("Waiting for jQuery to finish");
-                            (new WebDriverWait(driver, TimeSpan.FromMinutes(2))).Until(d => (bool)(d as IJavaScriptExecutor).ExecuteScript("return jQuery.active == 0"));
+                            (new WebDriverWait(driver, TimeSpan.FromMinutes(2))).Until(d => (bool)(d as IJavaScriptExecutor).ExecuteScript("return window.jQuery != undefined && jQuery.active === 0"));
 
                             if (queue[i].likes_work > 0)
                             {
@@ -162,7 +162,7 @@ namespace selenium_dotnet
                                 like.Click();
 
                                 Console.WriteLine("Waiting for jQuery to finish");
-                                (new WebDriverWait(driver, TimeSpan.FromMinutes(2))).Until(d => (bool)(d as IJavaScriptExecutor).ExecuteScript("return jQuery.active == 0"));
+                                (new WebDriverWait(driver, TimeSpan.FromMinutes(2))).Until(d => (bool)(d as IJavaScriptExecutor).ExecuteScript("return window.jQuery != undefined && jQuery.active === 0"));
                                 var inner_after = like.GetAttribute("innerHTML");
 
                                 if (inner_after.Contains("Appreciate-count-") && !inner_after.Equals(inner_before))
