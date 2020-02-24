@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-class Queue {
+class QueueDTO {
     public int id { get; set; }
     public int work_id { get; set; }
     public int likes_work { get; set; }
