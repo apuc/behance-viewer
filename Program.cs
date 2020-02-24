@@ -41,7 +41,7 @@ namespace selenium_dotnet
         }
 
         static Dictionary<string, bool> used_proxies = new Dictionary<string, bool>();
-        static string getProxyLimit(int limit = 50, int sleep_ms = 5000)
+        static string getProxyLimit(int limit = 100, int sleep_ms = 5000)
         {
             string proxy_str = null;
             int counter = 0;
