@@ -23,7 +23,7 @@ namespace selenium_dotnet
 
         static int Main(string[] args)
         {
-            return SingleBehance();
+            return ThreadedBehance(10, 10);
         }
 
         static Dictionary<string, bool> used_proxies = new Dictionary<string, bool>();
@@ -69,7 +69,7 @@ namespace selenium_dotnet
             client.Timeout = 2 * 60000;
             request.OnBeforeDeserialization = resp => { resp.ContentType = "application/json"; };
             var response = client.Get<List<ProxyDTO>>(request);
-            if (response.Data == null) 
+            if (response.Data == null)
             {
                 return;
             }
@@ -126,9 +126,10 @@ namespace selenium_dotnet
             proxy.SslProxy = proxy_str;
             options.Proxy = proxy;
 
-            var driver = new FirefoxDriver(options);
+            FirefoxDriver driver = null;
             try
             {
+                driver = new FirefoxDriver(options);
                 driver.Navigate().GoToUrl(url);
                 Actions action = new Actions(driver);
 
@@ -169,10 +170,12 @@ namespace selenium_dotnet
                 }
                 Console.WriteLine("Done");
 
-                if (Task.CurrentId != null) {
+                if (Task.CurrentId != null)
+                {
                     Task.Delay((new Random()).Next(5000, 10001));
                 }
-                else {
+                else
+                {
                     Thread.Sleep((new Random()).Next(5000, 10001));
                 }
                 Console.WriteLine("Done sleeping");
@@ -197,13 +200,14 @@ namespace selenium_dotnet
             }
             finally
             {
-                driver.Quit();
+                if (driver != null)
+                    driver.Quit();
                 Console.WriteLine("Terminated");
             }
             return (code, to_delete);
         }
 
-        static int SingleBehance(int count_items = 10)
+        static int SingleBehance(int count_items = 10, bool kill = true)
         {
             var queue = getItems(count_items);
 
@@ -243,11 +247,18 @@ namespace selenium_dotnet
                     queue.RemoveAt(item);
                 }
                 to_delete.Clear();
+                if (kill)
+                {
+                    foreach (var process in Process.GetProcessesByName("firefox"))
+                    {
+                        process.Kill();
+                    }
+                }
             }
             return 1;
         }
 
-        static int ThreadedBehance(int count_items = 10, int max_threads = 10)
+        static int ThreadedBehance(int count_items = 10, int max_threads = 10, bool kill = true)
         {
             var queue = getItems(count_items);
 
@@ -296,6 +307,13 @@ namespace selenium_dotnet
                     queue.RemoveAt(item);
                 }
                 to_delete.Clear();
+                if (kill)
+                {
+                    foreach (var process in Process.GetProcessesByName("firefox"))
+                    {
+                        process.Kill();
+                    }
+                }
             }
             return 1;
         }
