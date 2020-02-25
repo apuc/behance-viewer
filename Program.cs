@@ -34,18 +34,29 @@ namespace selenium_dotnet
             int counter = 0;
             while (counter < limit)
             {
-                if (proxies.Count == 0) {
-                    if (counter > 0) 
+                if (proxies.Count == 0)
+                {
+                    if (counter > 0)
                         Thread.Sleep(sleep_ms);
                     getProxy();
                     counter++;
                 }
-                proxy_str = proxies.Dequeue();
-                if (used_proxies.ContainsKey(proxy_str)) {
-                    proxy_str = null;
-                } else {
-                    used_proxies.Add(proxy_str, true);
-                    break;
+                if (proxies.Count == 0)
+                {
+                    continue;
+                }
+                else
+                {
+                    proxy_str = proxies.Dequeue();
+                    if (used_proxies.ContainsKey(proxy_str))
+                    {
+                        proxy_str = null;
+                    }
+                    else
+                    {
+                        used_proxies.Add(proxy_str, true);
+                        break;
+                    }
                 }
             }
             return proxy_str;
@@ -58,7 +69,12 @@ namespace selenium_dotnet
             client.Timeout = 2 * 60000;
             request.OnBeforeDeserialization = resp => { resp.ContentType = "application/json"; };
             var response = client.Get<List<ProxyDTO>>(request);
-            foreach(var proxy in response.Data) {
+            if (response.Data == null) 
+            {
+                return;
+            }
+            foreach (var proxy in response.Data)
+            {
                 proxies.Enqueue(proxy.host + ":" + proxy.port);
             }
         }
@@ -87,249 +103,201 @@ namespace selenium_dotnet
             return response.Data;
         }
 
-        static int SingleBehance()
+        static (int code, bool to_delete) TaskFunction(QueueDTO item, string proxy_str, int num)
         {
-            var queue = getItems(16);
-            string path = "log.txt";
-            Stopwatch watch = new Stopwatch();
+            Console.WriteLine("{0} started", item.id);
+            int views = item.views_work;
+            int likes = item.likes_work;
+            var url = item.url;
+            bool to_delete = false;
+            int code = -1;
 
-            using (StreamWriter sw = new StreamWriter(path, false, Encoding.UTF8, 4096000))
+            if (likes > views)
             {
-                while (queue.Count > 0)
+                views = likes;
+                item.views_work = item.likes_work;
+            }
+            Console.WriteLine("Started");
+            var options = new FirefoxOptions();
+            options.AddArgument("--headless");
+
+            Proxy proxy = new Proxy();
+            proxy.HttpProxy = proxy_str;
+            proxy.SslProxy = proxy_str;
+            options.Proxy = proxy;
+
+            var driver = new FirefoxDriver(options);
+            try
+            {
+                driver.Navigate().GoToUrl(url);
+                Actions action = new Actions(driver);
+
+                var elems = driver.FindElements(By.ClassName("Project-projectStat-6Y3"));
+
+                Console.WriteLine("Waiting for views\\likes\\comments block");
+                elems = (new WebDriverWait(driver, TimeSpan.FromMinutes(2))).
+                            Until(SeleniumExtras.WaitHelpers.ExpectedConditions.VisibilityOfAllElementsLocatedBy(By.ClassName("Project-projectStat-6Y3")));
+                action.MoveToElement(elems[1]);
+                var visits = elems[1].GetAttribute("innerHTML");
+                int pFrom = visits.IndexOf(">") + ">".Length;
+                int pTo = visits.LastIndexOf("<");
+                String result = visits.Substring(pFrom, pTo - pFrom);
+
+                Console.WriteLine("Waiting for jQuery to finish");
+                (new WebDriverWait(driver, TimeSpan.FromMinutes(2))).Until(d => (bool)(d as IJavaScriptExecutor).ExecuteScript("return window.jQuery != undefined && jQuery.active === 0"));
+
+                if (item.likes_work > 0)
                 {
-                    string proxy_str = getProxyLimit();
-                    if (proxy_str == null)
+
+                    var like = driver.FindElement(By.ClassName("Appreciate-wrapper-9hi"));
+                    var inner_before = like.GetAttribute("innerHTML");
+                    action.MoveToElement(like);
+                    Console.WriteLine("Waiting for like button");
+                    like = (new WebDriverWait(driver, TimeSpan.FromMinutes(2))).
+                            Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.ClassName("Appreciate-wrapper-9hi")));
+                    action.MoveToElement(like);
+                    like.Click();
+
+                    Console.WriteLine("Waiting for jQuery to finish");
+                    (new WebDriverWait(driver, TimeSpan.FromMinutes(2))).Until(d => (bool)(d as IJavaScriptExecutor).ExecuteScript("return window.jQuery != undefined && jQuery.active === 0"));
+                    var inner_after = like.GetAttribute("innerHTML");
+
+                    if (inner_after.Contains("Appreciate-count-") && !inner_after.Equals(inner_before))
                     {
-                        Console.WriteLine("proxy not found, aborting");
-                        return -1;
+                        item.likes_work -= 1;
                     }
-
-                    Console.WriteLine("proxy found - {0}", proxy_str);
-                    var to_delete = new List<int>();
-                    for (int i = 0; i < queue.Count; i++)
-                    {
-                        Console.WriteLine("{0} started", queue[i].id);
-                        Console.WriteLine("Timer start", queue[i].id);
-                        watch.Restart();
-                        int views = queue[i].views_work;
-                        int likes = queue[i].likes_work;
-                        var url = queue[i].url;
-
-                        if (likes > views)
-                        {
-                            views = likes;
-                            queue[i].views_work = queue[i].likes_work;
-                        }
-                        Console.WriteLine("Started");
-                        var options = new FirefoxOptions();
-                        options.AddArgument("--headless");
-
-                        Proxy proxy = new Proxy();
-                        proxy.HttpProxy = proxy_str;
-                        proxy.SslProxy = proxy_str;
-                        options.Proxy = proxy;
-
-                        var driver = new FirefoxDriver(options);
-                        try
-                        {
-                            driver.Navigate().GoToUrl(url);
-                            Actions action = new Actions(driver);
-
-                            var elems = driver.FindElements(By.ClassName("Project-projectStat-6Y3"));
-
-                            Console.WriteLine("Waiting for views\\likes\\comments block");
-                            elems = (new WebDriverWait(driver, TimeSpan.FromMinutes(2))).
-                                        Until(SeleniumExtras.WaitHelpers.ExpectedConditions.VisibilityOfAllElementsLocatedBy(By.ClassName("Project-projectStat-6Y3")));
-                            action.MoveToElement(elems[1]);
-                            var visits = elems[1].GetAttribute("innerHTML");
-                            int pFrom = visits.IndexOf(">") + ">".Length;
-                            int pTo = visits.LastIndexOf("<");
-                            String result = visits.Substring(pFrom, pTo - pFrom);
-
-                            Console.WriteLine("Waiting for jQuery to finish");
-                            (new WebDriverWait(driver, TimeSpan.FromMinutes(2))).Until(d => (bool)(d as IJavaScriptExecutor).ExecuteScript("return window.jQuery != undefined && jQuery.active === 0"));
-
-                            if (queue[i].likes_work > 0)
-                            {
-
-                                var like = driver.FindElement(By.ClassName("Appreciate-wrapper-9hi"));
-                                var inner_before = like.GetAttribute("innerHTML");
-                                action.MoveToElement(like);
-                                Console.WriteLine("Waiting for like button");
-                                like = (new WebDriverWait(driver, TimeSpan.FromMinutes(2))).
-                                        Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.ClassName("Appreciate-wrapper-9hi")));
-                                action.MoveToElement(like);
-                                like.Click();
-
-                                Console.WriteLine("Waiting for jQuery to finish");
-                                (new WebDriverWait(driver, TimeSpan.FromMinutes(2))).Until(d => (bool)(d as IJavaScriptExecutor).ExecuteScript("return window.jQuery != undefined && jQuery.active === 0"));
-                                var inner_after = like.GetAttribute("innerHTML");
-
-                                if (inner_after.Contains("Appreciate-count-") && !inner_after.Equals(inner_before))
-                                {
-                                    queue[i].likes_work -= 1;
-                                }
-                            }
-
-                            Console.WriteLine("Done");
-                            Thread.Sleep((new Random()).Next(5000, 10001));
-                            Console.WriteLine("Done sleeping");
-                            queue[i].views_work -= 1;
-                            if (updateQueue(queue[i].id, queue[i].likes_work, queue[i].views_work) == 2)
-                            {
-                                to_delete.Add(i);
-                            }
-                        }
-                        catch (Exception e)
-                        {
-                            System.Console.WriteLine(e.Message);
-                            Console.WriteLine("Error");
-                            System.Console.WriteLine("Regenerating proxy");
-                            proxy_str = getProxyLimit();
-                            if (proxy_str == null)
-                            {
-                                Console.WriteLine("proxy not found, aborting");
-                                return -1;
-                            }
-
-                            Console.WriteLine("proxy found - {0}", proxy_str);
-                            //i--; //to repeat failed
-                        }
-                        finally
-                        {
-                            watch.Stop();
-                            TimeSpan ts = watch.Elapsed;
-                            string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}",
-                                ts.Hours, ts.Minutes, ts.Seconds,
-                                ts.Milliseconds / 10);
-                            Console.WriteLine("RunTime " + elapsedTime);
-                            sw.WriteLine("RunTime " + elapsedTime);
-                            driver.Quit();
-                            Console.WriteLine("Terminated");
-                        }
-                    }
-                    to_delete.Reverse();
-                    foreach (var item in to_delete)
-                    {
-                        queue.RemoveAt(item);
-                    }
-                    to_delete.Clear();
                 }
-                sw.Flush();
+                Console.WriteLine("Done");
+
+                if (Task.CurrentId != null) {
+                    Task.Delay((new Random()).Next(5000, 10001));
+                }
+                else {
+                    Thread.Sleep((new Random()).Next(5000, 10001));
+                }
+                Console.WriteLine("Done sleeping");
+
+                item.views_work -= 1;
+                if (updateQueue(item.id, item.likes_work, item.views_work) == 2)
+                {
+                    to_delete = true;
+                    code = num;
+                }
+                else
+                {
+                    code = 1;
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Error");
+                System.Console.WriteLine(e.Message);
+                code = -1;
+                to_delete = false;
+            }
+            finally
+            {
+                driver.Quit();
+                Console.WriteLine("Terminated");
+            }
+            return (code, to_delete);
+        }
+
+        static int SingleBehance(int count_items = 10)
+        {
+            var queue = getItems(count_items);
+
+            while (queue.Count > 0)
+            {
+                string proxy_str = getProxyLimit();
+                if (proxy_str == null)
+                {
+                    Console.WriteLine("proxy not found, aborting");
+                    return -1;
+                }
+
+                Console.WriteLine("proxy found - {0}", proxy_str);
+                var to_delete = new List<int>();
+                var tasks = new List<Task>();
+                for (int i = 0; i < queue.Count; i++)
+                {
+                    var result = TaskFunction(queue[i], proxy_str, i);
+                    if (result.code == -1)
+                    {
+                        proxy_str = getProxyLimit();
+                        if (proxy_str == null)
+                        {
+                            Console.WriteLine("proxy not found, aborting");
+                            return -1;
+                        }
+                        Console.WriteLine("proxy found - {0}", proxy_str);
+                    }
+                    else if (result.to_delete)
+                    {
+                        to_delete.Add(result.code);
+                    }
+                }
+                to_delete.Reverse();
+                foreach (var item in to_delete)
+                {
+                    queue.RemoveAt(item);
+                }
+                to_delete.Clear();
             }
             return 1;
         }
 
-    //     static void ThreadedBehance()
-    //     {
-    //         // TODO: take data from queue using behance/behance/get?count=10
-    //         var queue = new List<object>();
-    //         queue.Add(new object());
-    //         int threads_num = 10;
-    //         var url = "https://www.behance.net/gallery/88190151/Landing-page-design-of-the-soap-bouquet-franchise";
+        static int ThreadedBehance(int count_items = 10, int max_threads = 10)
+        {
+            var queue = getItems(count_items);
 
+            while (queue.Count > 0)
+            {
+                string proxy_str = getProxyLimit();
+                if (proxy_str == null)
+                {
+                    Console.WriteLine("proxy not found, aborting");
+                    return -1;
+                }
+                Console.WriteLine("proxy found - {0}", proxy_str);
 
-    //         foreach (var item in queue)
-    //         {
-    //             var offset = 0;
-    //             var limit = 100;
-    //             //var proxy_list = getProxies(limit, offset);
+                var to_delete_mutex = new Mutex();
+                var to_delete = new List<int>();
+                var tasks = new List<Task>();
+                var semaphore = new SemaphoreSlim(max_threads);
 
-    //             //string url = //item.url;
-    //             int views = 11;//item.views;
-    //             int likes = 11;//item.likes;
-
-    //             if (likes > views)
-    //             {
-    //                 views = likes;
-    //             }
-    //             SemaphoreSlim maxThreads = new SemaphoreSlim(threads_num);
-    //             Mutex proxy_mutex = new Mutex();
-    //             Mutex views_mutex = new Mutex();
-    //             Mutex likes_mutex = new Mutex();
-    //             //TODO: mutex for decreasing views
-
-    //             var tasks = new List<Task>();
-    //             while (true)
-    //             {
-    //                 for (int i = 0; i < views; i++)
-    //                 {
-    //                     maxThreads.Wait();
-    //                     tasks.Add(Task.Factory.StartNew(async () =>
-    //                         {
-    //                             Console.WriteLine("Task {0} started", Task.CurrentId);
-    //                             var options = new FirefoxOptions();
-    //                             options.AddArgument("--headless");
-
-    //                             //proxy_mutex.WaitOne();
-    //                             //if (proxy_list.Count <= 0)
-    //                             //{
-    //                             //    offset += limit;
-    //                             //    proxy_list = getProxies(offset, limit);
-    //                             //}
-    //                             //var proxy_url = proxy_list[proxy_list.Count - 1];
-    //                             //proxy_list.RemoveAt(proxy_list.Count - 1);
-    //                             //proxy_mutex.ReleaseMutex();
-    //                             //
-    //                             //Proxy proxy = new Proxy();
-    //                             //proxy.HttpProxy = proxy_url;
-    //                             //proxy.SslProxy = proxy_url;
-    //                             //options.Proxy = proxy;
-
-    //                             var driver = new FirefoxDriver(options);
-
-    //                             try
-    //                             {
-    //                                 driver.Navigate().GoToUrl(url);
-
-    //                                 var elem = driver.FindElements(By.ClassName("Project-projectStat-6Y3"));
-    //                                 while (elem.Count == 0)
-    //                                 {
-    //                                     elem = driver.FindElements(By.ClassName("Project-projectStat-6Y3"));
-    //                                 }
-    //                                 var visits = elem[1].GetAttribute("innerHTML");
-    //                                 int pFrom = visits.IndexOf(">") + ">".Length;
-    //                                 int pTo = visits.LastIndexOf("<");
-    //                                 String result = visits.Substring(pFrom, pTo - pFrom);
-
-    //                                 await Task.Delay((new Random()).Next(5000, 10001));
-
-    //                                 views_mutex.WaitOne();
-    //                                 --views;
-    //                                 views_mutex.ReleaseMutex();
-
-    //                                 elem = driver.FindElements(By.ClassName("Appreciate-wrapper-9hi"));
-    //                                 likes_mutex.WaitOne();
-    //                                 if (likes > 0)
-    //                                 {
-    //                                     var like = driver.FindElement(By.ClassName("Appreciate-wrapper-9hi"));
-    //                                     Console.Write(like.GetAttribute("innerHTML"));
-    //                                     like.Click();
-    //                                     likes--;
-    //                                 }
-    //                                 likes_mutex.ReleaseMutex();
-    //                                 Console.WriteLine("Task {0} is done", Task.CurrentId);
-    //                                 maxThreads.Release();
-    //                             }
-    //                             catch (Exception e)
-    //                             {
-    //                                 likes_mutex.ReleaseMutex();
-    //                                 Console.WriteLine("Task {0} error", Task.CurrentId);
-    //                                 System.Console.WriteLine(e.Message);
-    //                             }
-    //                             finally
-    //                             {
-    //                                 driver.Quit();
-    //                                 Console.WriteLine("Task {0} terminated", Task.CurrentId);
-    //                             }
-    //                         }, TaskCreationOptions.LongRunning));
-    //                 }
-    //                 Task.WaitAll(tasks.ToArray());
-    //                 // TODO: add condition to continue if everything isnt 0
-    //                 break;
-    //             }
-    //         }
-    //     }
-    // }
+                for (int i = 0; i < queue.Count; i++)
+                {
+                    var j = i;
+                    semaphore.Wait();
+                    tasks.Add(Task.Factory.StartNew(() =>
+                    {
+                        Console.WriteLine("Task {0} started", Task.CurrentId);
+                        var result = TaskFunction(queue[j], proxy_str, j);
+                        Console.WriteLine("Task {0} finished", Task.CurrentId);
+                        return result;
+                    }, TaskCreationOptions.LongRunning).ContinueWith((task) =>
+                    {
+                        semaphore.Release();
+                        if (task.Result.to_delete)
+                        {
+                            to_delete_mutex.WaitOne();
+                            to_delete.Add(task.Result.code);
+                            to_delete_mutex.ReleaseMutex();
+                        }
+                    }));
+                }
+                Task.WaitAll(tasks.ToArray());
+                tasks.Clear();
+                to_delete.Sort();
+                to_delete.Reverse();
+                foreach (var item in to_delete)
+                {
+                    queue.RemoveAt(item);
+                }
+                to_delete.Clear();
+            }
+            return 1;
+        }
     }
 }
