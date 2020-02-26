@@ -20,10 +20,11 @@ namespace selenium_dotnet
     class Program
     {
         private static string api_key = "e94580eb-08eb-4e0e-9dc8-48d30ed67c3d";
+        private static string main_url = "https://betop.space/behance";
 
         static int Main(string[] args)
         {
-            return ThreadedBehance(10, 10);
+            return ThreadedBehance(99, 10);
         }
 
         static Dictionary<string, bool> used_proxies = new Dictionary<string, bool>();
@@ -81,7 +82,8 @@ namespace selenium_dotnet
 
         static List<QueueDTO> getItems(int count = 10)
         {
-            var client = new RestClient("http://behance/behance");
+            var client = new RestClient(main_url);
+            //client.RemoteCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true;
             var request = new RestRequest("get", Method.GET, DataFormat.Json);
             request.AddQueryParameter("api_key", api_key);
             request.AddQueryParameter("count", count.ToString());
@@ -92,7 +94,7 @@ namespace selenium_dotnet
 
         static int updateQueue(int id, int likes, int views)
         {
-            var client = new RestClient("http://behance/behance");
+            var client = new RestClient(main_url);
             var request = new RestRequest("update", Method.GET, DataFormat.Json);
             request.AddQueryParameter("id", id.ToString());
             request.AddQueryParameter("likes", likes.ToString());
