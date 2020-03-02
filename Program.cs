@@ -24,7 +24,15 @@ namespace selenium_dotnet
 
         static int Main(string[] args)
         {
-            return ThreadedBehance(99, 10);
+            int count_items = 10;
+
+            var status = mergeItems();
+            if (status != 1) {
+                Console.WriteLine("Merge failed. Aborting...");
+                return -1;
+            }
+            var queue = getItems(count_items);
+            return ThreadedBehance(queue);
         }
 
         static Dictionary<string, bool> used_proxies = new Dictionary<string, bool>();
@@ -83,12 +91,21 @@ namespace selenium_dotnet
         static List<QueueDTO> getItems(int count = 10)
         {
             var client = new RestClient(main_url);
-            //client.RemoteCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true;
             var request = new RestRequest("get", Method.GET, DataFormat.Json);
             request.AddQueryParameter("api_key", api_key);
             request.AddQueryParameter("count", count.ToString());
             request.OnBeforeDeserialization = resp => { resp.ContentType = "application/json"; };
             var response = client.Get<List<QueueDTO>>(request);
+            return response.Data;
+        }
+
+        static int mergeItems()
+        {
+            var client = new RestClient(main_url);
+            var request = new RestRequest("merge", Method.GET, DataFormat.Json);
+            request.AddQueryParameter("api_key", api_key);
+            request.OnBeforeDeserialization = resp => { resp.ContentType = "application/json"; };
+            var response = client.Get<int>(request);
             return response.Data;
         }
 
@@ -209,16 +226,14 @@ namespace selenium_dotnet
             return (code, to_delete);
         }
 
-        static int SingleBehance(int count_items = 10, bool kill = true)
-        {
-            var queue = getItems(count_items);
-
+        static int SingleBehance(List<QueueDTO> queue, bool kill = true)
+        {          
             while (queue.Count > 0)
             {
                 string proxy_str = getProxyLimit();
                 if (proxy_str == null)
                 {
-                    Console.WriteLine("proxy not found, aborting");
+                    Console.WriteLine("Proxy not found. Aborting...");
                     return -1;
                 }
 
@@ -260,10 +275,8 @@ namespace selenium_dotnet
             return 1;
         }
 
-        static int ThreadedBehance(int count_items = 10, int max_threads = 10, bool kill = true)
+        static int ThreadedBehance(List<QueueDTO> queue, int max_threads = 10, bool kill = true)
         {
-            var queue = getItems(count_items);
-
             while (queue.Count > 0)
             {
                 string proxy_str = getProxyLimit();
