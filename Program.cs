@@ -5,34 +5,59 @@ using OpenQA.Selenium.Firefox;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenQA.Selenium.Interactions;
-using OpenQA.Selenium.Support;
 using OpenQA.Selenium.Support.UI;
-using MySqlConnector;
-using MySql.Data.MySqlClient;
 using RestSharp;
-using RestSharp.Serializers;
-using System.IO;
-using System.Text;
 using System.Diagnostics;
+using CommandLine;
 
 namespace selenium_dotnet
 {
     class Program
     {
+        class Options
+        {
+            [Option(Required=false)]
+            public int Threads { get; set; } = 10;
+
+            [Option(Required=false)]
+            public int CountItems { get; set; } = 10;
+
+            [Option(Required=false)]
+            public bool Threaded { get; set; } = false;
+
+            [Option(Required=false)]
+            public bool Kill { get; set; } = false;
+        }
         private static string api_key = "e94580eb-08eb-4e0e-9dc8-48d30ed67c3d";
         private static string main_url = "https://betop.space/behance";
 
         static int Main(string[] args)
         {
-            int count_items = 10;
+            int count_items = -1;
+            int threads = -1;
+            bool threaded = false;
+            bool kill = false;
+            
+            var result = Parser.Default.ParseArguments<Options>(args).
+            WithParsed(options => {
+                count_items = options.CountItems;
+                threads = options.Threads;
+                kill = options.Kill;
+                threaded = options.Threaded;
+            }).WithNotParsed(errors => {return;});   
 
             var status = mergeItems();
-            if (status != 1) {
+            if (status != 1)
+            {
                 Console.WriteLine("Merge failed. Aborting...");
                 return -1;
             }
             var queue = getItems(count_items);
-            return ThreadedBehance(queue);
+            if (threaded) {
+                return ThreadedBehance(queue, threads, kill);
+            } else {
+                return SingleBehance(queue, kill);
+            }
         }
 
         static Dictionary<string, bool> used_proxies = new Dictionary<string, bool>();
@@ -227,7 +252,7 @@ namespace selenium_dotnet
         }
 
         static int SingleBehance(List<QueueDTO> queue, bool kill = true)
-        {          
+        {
             while (queue.Count > 0)
             {
                 string proxy_str = getProxyLimit();
