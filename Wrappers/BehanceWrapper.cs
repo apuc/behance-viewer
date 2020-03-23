@@ -18,7 +18,7 @@ namespace selenium_dotnet.Wrappers
         public BehanceViewer()
         {
             var options = new FirefoxOptions();
-            options.AddArgument("--headless");
+            //options.AddArgument("--headless");
             driver = new FirefoxDriver(options);
         }
 
@@ -51,9 +51,8 @@ namespace selenium_dotnet.Wrappers
                                 prefs.setIntPref(""network.proxy.ssl_port"", ""{1}"");
                                 prefs.setCharPref(""network.proxy.ftp"", ""{0}"");
                                 prefs.setIntPref(""network.proxy.ftp_port"", ""{1}"");";
-            string.Format(setupScript, proxy.host, proxy.port);
 
-            (driver as IJavaScriptExecutor).ExecuteScript(setupScript);
+            (driver as IJavaScriptExecutor).ExecuteScript(string.Format(setupScript, proxy.host, proxy.port));
 
             this.Sleep(1000);
         }

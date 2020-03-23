@@ -27,7 +27,7 @@ namespace selenium_dotnet
             [Option(Required = false)]
             public bool Kill { get; set; } = false;
         }
-        
+
         private static ProxyWrapper proxy_wrapper = new ProxyWrapper();
         private static QueueWrapper queue = new QueueWrapper();
 
@@ -69,28 +69,28 @@ namespace selenium_dotnet
             BehanceViewer viewer = new BehanceViewer();
             while (queue.Count > 0)
             {
-                ProxyDTO proxy_str = proxy_wrapper.dequeProxy();
-                if (proxy_str == null)
+                ProxyDTO proxy = proxy_wrapper.dequeProxy();
+                if (proxy == null)
                 {
                     Console.WriteLine("Proxy not found. Aborting...");
                     return -1;
                 }
 
-                Console.WriteLine("proxy found - {0}", proxy_str);
+                Console.WriteLine("proxy found - {0}", proxy);
                 var to_delete = new List<int>();
                 var tasks = new List<Task>();
                 for (int i = 0; i < queue.Count; i++)
                 {
-                    var result = viewer.TaskFunction(queue[i]);
+                    var result = viewer.TaskFunction(queue[i], proxy);
                     if (result == -1)
                     {
-                        proxy_str = proxy_wrapper.dequeProxy();
-                        if (proxy_str == null)
+                        proxy = proxy_wrapper.dequeProxy();
+                        if (proxy == null)
                         {
                             Console.WriteLine("proxy not found, aborting");
                             return -1;
                         }
-                        Console.WriteLine("proxy found - {0}", proxy_str);
+                        Console.WriteLine("proxy found - {0}", proxy);
                     }
                     else
                     {

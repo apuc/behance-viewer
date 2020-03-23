@@ -22,8 +22,7 @@ namespace selenium_dotnet.Wrappers
         }
 
         public int MergeQueueItems()
-        {
-            
+        { 
             var client = new RestClient(main_url);
             var request = new RestRequest("merge", Method.GET, DataFormat.Json);
             request.AddQueryParameter("api_key", api_key);
