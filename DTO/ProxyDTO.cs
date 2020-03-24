@@ -7,9 +7,11 @@ namespace selenium_dotnet.DTO
         public string host { get; set; }
         public string port { get; set; }
 
+        public string Proxy {get => host + ":" + port;}
+
         public override int GetHashCode()
         {
-            return host.GetHashCode() + port.GetHashCode();
+            return this.Proxy.GetHashCode();
         }
 
         public override bool Equals(object obj) {
