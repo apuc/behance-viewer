@@ -11,14 +11,14 @@ using selenium_dotnet.DTO;
 
 namespace selenium_dotnet.Wrappers
 {
-    public class BehanceViewer
+    public class BehanceWrapper
     {
         FirefoxDriver driver;
 
-        public BehanceViewer()
+        public BehanceWrapper()
         {
             var options = new FirefoxOptions();
-            //options.AddArgument("--headless");
+            options.AddArgument("--headless");
             driver = new FirefoxDriver(options);
         }
 

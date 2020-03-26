@@ -66,7 +66,7 @@ namespace selenium_dotnet
 
         static int SingleBehance()
         {
-            BehanceViewer viewer = new BehanceViewer();
+            BehanceWrapper viewer = new BehanceWrapper();
             while (queue.Count > 0)
             {
                 ProxyDTO proxy = proxy_wrapper.dequeProxy();
@@ -111,7 +111,11 @@ namespace selenium_dotnet
 
         static int ThreadedBehance(int max_threads = 10)
         {
-            List<BehanceViewer> viewers = new List<BehanceViewer>(max_threads);
+            var loc_max_threads = max_threads > queue.Count ? queue.Count : max_threads;
+            List<BehanceWrapper> viewers = new List<BehanceWrapper>(loc_max_threads);
+            for (int i = 0; i < loc_max_threads; i++) {
+                viewers.Add(new BehanceWrapper());
+            }
             while (queue.Count > 0)
             {
                 ProxyDTO proxy = proxy_wrapper.dequeProxy();
@@ -125,7 +129,7 @@ namespace selenium_dotnet
                 var to_delete_mutex = new Mutex();
                 var to_delete = new List<int>();
                 var tasks = new List<Task>();
-                var semaphore = new SemaphoreSlim(max_threads);
+                var semaphore = new SemaphoreSlim(loc_max_threads);
 
                 for (int i = 0; i < queue.Count; i++)
                 {
