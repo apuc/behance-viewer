@@ -70,14 +70,14 @@ namespace selenium_dotnet
 
         static int RefreshQueue(int count_items=10)
         {
-            // var status = queue.MergeQueueItems();
-            // if (status != 1)
-            // {
-            //     Console.WriteLine("Merge failed. Aborting...");
-            //     return -1;
-            // }
+            var status = queue.MergeQueueItems();
+            if (status != 1)
+            {
+                Console.WriteLine("Merge failed. Aborting...");
+                return -1;
+            }
             queue.GetItems(count_items);
-            return 1;//status;
+            return status;
         }
 
         static int SingleBehance()
