@@ -22,15 +22,20 @@ namespace selenium_dotnet
             public int CountItems { get; set; } = 10;
 
             [Option(Required = false)]
-            public bool Threaded { get; set; } = false;
+            public bool Threaded { get; set; } = true;
 
             [Option(Required = false)]
             public bool Kill { get; set; } = false;
+
+            [Option(Required = false)]
+            public int RefreshQueuePeriod { get; set; } = 50;
         }
 
         private static ProxyWrapper proxy_wrapper = new ProxyWrapper();
         private static QueueWrapper queue = new QueueWrapper();
 
+        private static int refresh_period = -1;
+        private static int current_period = 0;
         static int Main(string[] args)
         {
             int count_items = -1;
@@ -44,15 +49,14 @@ namespace selenium_dotnet
                 threads = options.Threads;
                 kill = options.Kill;
                 threaded = options.Threaded;
+                refresh_period = options.RefreshQueuePeriod;
             }).WithNotParsed(errors => { return; });
 
-            var status = queue.MergeQueueItems();
+            var status = RefreshQueue();
             if (status != 1)
             {
-                Console.WriteLine("Merge failed. Aborting...");
                 return -1;
             }
-            queue.GetItems(count_items);
             status = threaded ? ThreadedBehance(threads) : SingleBehance();
             if (kill)
             {
@@ -62,6 +66,18 @@ namespace selenium_dotnet
                 }
             }
             return status;
+        }
+
+        static int RefreshQueue(int count_items=10)
+        {
+            // var status = queue.MergeQueueItems();
+            // if (status != 1)
+            // {
+            //     Console.WriteLine("Merge failed. Aborting...");
+            //     return -1;
+            // }
+            queue.GetItems(count_items);
+            return 1;//status;
         }
 
         static int SingleBehance()
@@ -104,6 +120,17 @@ namespace selenium_dotnet
                     queue.RemoveAt(item);
                 }
                 to_delete.Clear();
+
+                current_period += 1;
+                if (refresh_period >= current_period ||  queue.Count == 0) {
+                    Console.WriteLine("Refershing queue");
+                    var status = RefreshQueue();
+                    if (status != 1)
+                    {
+                        return -1;
+                    }
+                    current_period = 0;
+                }
             }
             viewer.Close();
             return 1;
@@ -165,6 +192,17 @@ namespace selenium_dotnet
                     queue.RemoveAt(item);
                 }
                 to_delete.Clear();
+
+                current_period += 1;
+                if (refresh_period >= current_period ||  queue.Count == 0) {
+                    Console.WriteLine("Refershing queue");
+                    var status = RefreshQueue();
+                    if (status != 1)
+                    {
+                        return -1;
+                    }
+                    current_period = 0;
+                }
             }
             viewers.ForEach(item => item.Close());
             return 1;
