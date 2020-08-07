@@ -28,7 +28,7 @@ namespace selenium_dotnet
             public bool Kill { get; set; } = false;
 
             [Option(Required = false)]
-            public int RefreshQueuePeriod { get; set; } = 50;
+            public int RefreshQueuePeriod { get; set; } = 25;
         }
 
         private static ProxyWrapper proxy_wrapper = new ProxyWrapper();
